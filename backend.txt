@@ -1,0 +1,30 @@
+const io = require('socket.io')(3000);
+
+const users = {};
+
+io.on('connection', (socket) => {
+  console.log('New user connected:', socket.id);
+
+  // Handle new user joining
+  socket.on('join', (username) => {
+    users[socket.id] = username;
+    console.log(`${username} joined the chat`);
+    socket.broadcast.emit('user-joined', username);
+  });
+
+  // Handle new chat message
+  socket.on('chat-message', (message) => {
+    console.log(`${users[socket.id]}: ${message}`);
+    socket.broadcast.emit('chat-message', {
+      message: message,
+      username: users[socket.id]
+    });
+  });
+
+  // Handle user disconnecting
+  socket.on('disconnect', () => {
+    console.log(`${users[socket.id]} left the chat`);
+    socket.broadcast.emit('user-left', users[socket.id]);
+    delete users[socket.id];
+  });
+});
